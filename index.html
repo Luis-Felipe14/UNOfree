@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>UNO - Web Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (Compat version for simplicity without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="game-app">
+        <!-- BACKGROUND ANIMADO -->
+        <div class="background-overlay"></div>
+
+        <!-- MENU PRINCIPAL / LOBBY -->
+        <div id="main-menu" class="screen active">
+            <div class="menu-content">
+                <h1 class="game-logo">UNO</h1>
+                <p class="subtitle">World Edition</p>
+
+                <div class="menu-buttons" id="initial-buttons">
+                    <button class="menu-btn primary" onclick="showConfig('cpu')">
+                        <span class="icon">🤖</span> Jogar vs CPU
+                    </button>
+                    <button class="menu-btn secondary" onclick="showConfig('local')">
+                        <span class="icon">👥</span> Multiplayer Local
+                    </button>
+                    <!-- NOVA OPÇÃO -->
+                    <button class="menu-btn online-btn" onclick="showOnlineMenu()"
+                        style="background: linear-gradient(45deg, #9b59b6, #8e44ad); color: white;">
+                        <span class="icon">🌍</span> Jogar Online
+                    </button>
+                </div>
+
+                <!-- MENU ONLINE (CRIAR/ENTRAR) -->
+                <div id="online-menu" class="config-panel hidden">
+                    <h2>Modo Online</h2>
+                    <div class="menu-buttons">
+                        <input type="text" id="player-name-input" placeholder="Seu Apelido" class="input-field"
+                            maxlength="10">
+
+                        <div class="divider"></div>
+
+                        <button class="menu-btn primary" onclick="createRoom()">Criar Sala</button>
+
+                        <div class="divider">OU</div>
+
+                        <div class="join-room-group">
+                            <input type="text" id="room-code-input" placeholder="Código da Sala"
+                                class="input-field uppercase">
+                            <button class="menu-btn secondary" onclick="joinRoom()">Entrar</button>
+                        </div>
+
+                        <button class="exit-btn" style="color: #333; border-color: #333; margin-top: 20px;"
+                            onclick="hideOnlineMenu()">Voltar</button>
+                    </div>
+                </div>
+
+                <!-- LOBBY DE ESPERA ONLINE -->
+                <div id="lobby-screen" class="config-panel hidden">
+                    <h2>Sala: <span id="lobby-room-code" style="color: #9b59b6; font-family: monospace;">---</span></h2>
+                    <p>Compartilhe o código com seus amigos!</p>
+
+                    <div class="lobby-players">
+                        <h3>Jogadores na Sala:</h3>
+                        <ul id="lobby-player-list">
+                            <!-- Lista via JS -->
+                        </ul>
+                    </div>
+
+                    <div id="host-controls" class="hidden">
+                        <button class="menu-btn primary" onclick="startOnlineGame()">INICIAR JOGO</button>
+                    </div>
+                    <div id="client-controls">
+                        <p class="status-text">Aguardando o Host iniciar...</p>
+                    </div>
+
+                    <button class="exit-btn" style="color: #333; border-color: #333; margin-top: 20px;"
+                        onclick="location.reload()">Sair da Sala</button>
+                </div>
+
+                <!-- PAINEL DE CONFIGURAÇÃO (OFFLINE) -->
+                <div id="config-panel" class="config-panel hidden">
+                    <h2>Configurar Jogo</h2>
+
+                    <div class="config-group">
+                        <label>Jogadores:</label>
+                        <div class="player-count-control">
+                            <button class="count-btn" onclick="adjustPlayers(-1)">-</button>
+                            <span id="player-count-display">2</span>
+                            <button class="count-btn" onclick="adjustPlayers(1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <label>Regras Opcionais:</label>
+                        <div class="checkbox-list">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="rule-stack" checked> Empilhar +2 (Stack)
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="rule-slap" checked> Desafio do 9 (Bater)
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="rule-draw-until"> Comprar até Jogar
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="rule-uno-penalty" checked> Penalidade UNO (Gritar)
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="menu-btn primary" onclick="startGame()">INICIAR</button>
+                    <button class="exit-btn" style="color: #333; border-color: #333;"
+                        onclick="hideConfig()">Voltar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA DE TRANSIÇÃO -->
+        <div id="turn-overlay" class="screen hidden">
+            <div class="overlay-content">
+                <h2>Vez de <span id="turn-player-name">Jogador</span></h2>
+                <button class="menu-btn" onclick="startTurn()">Ver Cartas</button>
+            </div>
+        </div>
+
+        <!-- OVERLAY DESAFIO DO 9 -->
+        <div id="slap-overlay" class="screen hidden" style="background: rgba(255,0,0,0.8); z-index: 300;">
+            <div class="slap-content" style="text-align: center;">
+                <h1 style="font-size: 80px; margin-bottom: 20px; animation: pulse 0.2s infinite;">BATA!</h1>
+                <p id="slap-instructions" style="font-size: 24px;">Clique no botão!</p>
+                <div id="slap-btn" class="slap-btn-circle">👋</div>
+                <div id="slap-keys" class="hidden" style="margin-top: 20px; font-size: 30px; font-weight: bold;">
+                    <!-- Teclas serão injetadas via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MESA DE JOGO -->
+        <div id="game-board" class="screen hidden">
+            <!-- Barra de Oponentes (Múltiplos) -->
+            <div class="components-area top-player">
+                <div class="opponents-bar" id="opponents-container">
+                    <!-- Cards dos oponentes gerados via JS -->
+                </div>
+            </div>
+
+            <!-- Área Central (Mesa) -->
+            <div class="table-area">
+                <div class="deck-area">
+                    <div class="card-pile deck" id="draw-pile">
+                        <div class="card-back">
+                            <div class="uno-logo"><span class="y">U</span><span class="n">N</span><span
+                                    class="o">O</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="play-area">
+                    <div class="card-pile discard" id="discard-pile">
+                        <div class="card-placeholder"></div>
+                    </div>
+                </div>
+
+                <div class="game-message" id="game-message">
+                    <span>Bem-vindo!</span>
+                </div>
+
+                <!-- Corrigido: Botões de cor -->
+                <div class="color-picker-modal hidden" id="color-picker">
+                    <h3>Escolha uma cor</h3>
+                    <div class="colors">
+                        <button class="color-btn red-bg" data-color="red"></button>
+                        <button class="color-btn blue-bg" data-color="blue"></button>
+                        <button class="color-btn green-bg" data-color="green"></button>
+                        <button class="color-btn yellow-bg" data-color="yellow"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Área do Jogador Local -->
+            <div class="player-area bottom-player">
+                <div class="hand-container" id="local-hand">
+                    <!-- Cartas do Jogador -->
+                </div>
+                <div class="player-info">
+                    <div class="avatar player-avatar" id="player-avatar">VOCÊ</div>
+                    <button id="uno-btn" class="uno-shout-btn" disabled>UNO!</button>
+                    <button id="exit-btn" class="exit-btn" onclick="location.reload()">Sair</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

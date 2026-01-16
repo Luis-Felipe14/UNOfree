@@ -1,0 +1,13 @@
+(npm install firebase)
+
+
+
+  apiKey: "AIzaSyAXmhGDM3bYsv8APb4_mD5q98SuoMMpaSw",
+  authDomain: "unofree-a5686.firebaseapp.com",
+  databaseURL: "https://unofree-a5686-default-rtdb.firebaseio.com",
+  projectId: "unofree-a5686",
+  storageBucket: "unofree-a5686.firebasestorage.app",
+  messagingSenderId: "1089570063440",
+  appId: "1:1089570063440:web:70241774807184413d3d55",
+  measurementId: "G-NZPMQDLG2Q"
+

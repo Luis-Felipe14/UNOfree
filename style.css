@@ -1,0 +1,925 @@
+:root {
+    --red: #ff5555;
+    --blue: #5555ff;
+    --green: #55aa55;
+    --yellow: #ffaa00;
+    --black: #1a1a1a;
+    --white: #ffffff;
+    --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    --card-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    --card-hover-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    font-family: 'Arial Rounded MT Bold', 'Outfit', sans-serif;
+    /* Fonte mais gordinha */
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg-gradient);
+    color: var(--white);
+}
+
+#game-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    padding: 10px;
+}
+
+/* --- TELAS (MENU, JOGO, OVERLAY) --- */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    /* Flex por padr√£o nas telas ativas */
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s;
+    z-index: 10;
+}
+
+.screen.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* MENU PRINCIPAL */
+#main-menu {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    flex-direction: column;
+}
+
+.game-logo {
+    font-size: 120px;
+    color: #ffaa00;
+    text-shadow: 4px 4px 0 #cc0000, 8px 8px 0 #000;
+    transform: rotate(-10deg) skewX(-10deg);
+    margin-bottom: 0;
+    letter-spacing: -10px;
+}
+
+.subtitle {
+    font-size: 24px;
+    margin-bottom: 50px;
+    opacity: 0.8;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+}
+
+.menu-buttons {
+    display: flex;
+    gap: 20px;
+    flex-direction: column;
+}
+
+.menu-btn {
+    padding: 15px 40px;
+    font-size: 20px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+    background: white;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.menu-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.menu-btn.primary {
+    background: linear-gradient(45deg, #ffaa00, #ff5555);
+    color: white;
+}
+
+.menu-btn.secondary {
+    background: linear-gradient(45deg, #55aa55, #5555ff);
+    color: white;
+}
+
+.exit-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 5px 15px;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 20px;
+}
+
+/* OVERLAY DE TURNO (MULTIPLAYER) */
+#turn-overlay {
+    background: rgba(0, 0, 0, 0.95);
+    flex-direction: column;
+    z-index: 50;
+    color: white;
+}
+
+#turn-overlay h2 {
+    font-size: 40px;
+    margin-bottom: 30px;
+}
+
+/* LAYOUT DO JOGO (GAME BOARD) */
+#game-board {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+.player-area {
+    height: 25%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.top-player .hand-container {
+    margin-top: -20px;
+}
+
+.bottom-player .hand-container {
+    margin-bottom: 20px;
+}
+
+.hand-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 160px;
+    width: 100%;
+}
+
+.table-area {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    position: relative;
+    max-height: 40%;
+}
+
+/* --- DESIGN DAS CARTAS ESTILO CL√ÅSSICO --- */
+.card {
+    width: 100px;
+    /* Tamanho padr√£o */
+    height: 154px;
+    /* Propor√ß√£o ~1.54 */
+    background-color: white;
+    /* Borda branca externa */
+    border-radius: 8px;
+    /* Cantos arredondados, mas n√£o muito */
+    position: relative;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, margin 0.2s;
+    font-weight: 900;
+    z-index: 1;
+    margin-left: -35px;
+    /* Sobreposi√ß√£o default */
+    padding: 4px;
+    /* Espessura da borda branca */
+}
+
+.card:first-child {
+    margin-left: 0;
+}
+
+.discard .card {
+    margin-left: 0;
+    transform: rotate(5deg);
+}
+
+/* Fundo Colorido Interno */
+.card-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Cores de Fundo (Inner) */
+.card[data-color="red"] .card-inner {
+    background-color: var(--red);
+}
+
+.card[data-color="blue"] .card-inner {
+    background-color: var(--blue);
+}
+
+.card[data-color="green"] .card-inner {
+    background-color: var(--green);
+}
+
+.card[data-color="yellow"] .card-inner {
+    background-color: var(--yellow);
+}
+
+.card[data-color="black"] .card-inner {
+    background-color: var(--black);
+}
+
+/* Oval Branca Central Girada */
+.card-oval {
+    width: 85%;
+    height: 60%;
+    background: white;
+    border-radius: 50%;
+    transform: rotate(-30deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* O Valor Central */
+.card-value-main {
+    font-size: 55px;
+    font-weight: 900;
+    /* Texto colorido com borda preta */
+    -webkit-text-stroke: 2px black;
+    paint-order: stroke fill;
+    z-index: 2;
+}
+
+/* Cores do Texto (devem combinar com o fundo) */
+.card[data-color="red"] .card-value-main {
+    color: var(--red);
+}
+
+.card[data-color="blue"] .card-value-main {
+    color: var(--blue);
+}
+
+.card[data-color="green"] .card-value-main {
+    color: var(--green);
+}
+
+.card[data-color="yellow"] .card-value-main {
+    color: var(--yellow);
+}
+
+/* Especiais */
+.card[data-color="black"] .card-value-main {
+    color: black;
+    -webkit-text-stroke: 0;
+}
+
+/* Coringas n√£o tem n√∫mero padr√£o aqui */
+
+/* Mini Valores nos Cantos */
+.card-mini {
+    position: absolute;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.card-mini.top-left {
+    top: 2px;
+    left: 4px;
+}
+
+.card-mini.bottom-right {
+    bottom: 2px;
+    right: 4px;
+    transform: rotate(180deg);
+}
+
+
+/* --- DESIGNS ESPECIAIS --- */
+
+/* CORINGA (WILD) - Oval com 4 cores */
+.card[data-value="WILD"] .card-oval,
+.card[data-value="+4"] .card-oval {
+    background: conic-gradient(var(--red) 0deg 90deg,
+            var(--blue) 90deg 180deg,
+            var(--yellow) 180deg 270deg,
+            var(--green) 270deg 360deg);
+    border: 3px solid white;
+}
+
+/* +4 VISUAL - 4 Mini Cartas */
+.plus4-symbol {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.mini-card {
+    position: absolute;
+    width: 18px;
+    height: 28px;
+    background: white;
+    border-radius: 2px;
+    border: 1px solid black;
+}
+
+.mini-card.blue {
+    background: var(--blue);
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.mini-card.green {
+    background: var(--green);
+    top: 5px;
+    left: 8px;
+    z-index: 2;
+}
+
+.mini-card.red {
+    background: var(--red);
+    top: 10px;
+    left: 4px;
+    z-index: 3;
+}
+
+.mini-card.yellow {
+    background: var(--yellow);
+    top: 15px;
+    left: 12px;
+    z-index: 4;
+}
+
+/* HOVER EFFECT NA M√ÉO DO JOGADOR */
+#local-hand .card:hover {
+    transform: translateY(-30px) scale(1.1);
+    z-index: 100;
+    margin-right: 20px;
+    margin-left: 10px;
+    box-shadow: var(--card-hover-shadow);
+}
+
+/* VERSO DA CARTA (DECK) */
+.card-back {
+    width: 100%;
+    height: 100%;
+    background: black;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.uno-logo {
+    display: flex;
+    font-size: 32px;
+    font-weight: 900;
+    transform: rotate(-30deg);
+}
+
+.uno-logo .y {
+    color: var(--yellow);
+    text-shadow: 2px 2px 0 var(--red);
+}
+
+.uno-logo .n {
+    color: var(--red);
+    text-shadow: 2px 2px 0 var(--yellow);
+}
+
+.uno-logo .o {
+    color: var(--green);
+    text-shadow: 2px 2px 0 var(--blue);
+}
+
+
+/* M√ÉO DO OPONENTE */
+#remote-hand .card {
+    width: 60px;
+    height: 90px;
+    margin-left: -40px;
+}
+
+/* MODAL DE COR */
+.color-picker-modal {
+    position: absolute;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.color-picker-modal.hidden {
+    display: none;
+}
+
+.colors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.color-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.color-btn.red-bg {
+    background: var(--red);
+}
+
+.color-btn.blue-bg {
+    background: var(--blue);
+}
+
+.color-btn.green-bg {
+    background: var(--green);
+}
+
+.color-btn.yellow-bg {
+    background: var(--yellow);
+}
+
+/* MENSAGEM */
+.game-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s;
+    z-index: 150;
+    white-space: nowrap;
+}
+
+.game-message.show {
+    opacity: 1;
+    margin-top: -50px;
+}
+
+/* AVATARES */
+.avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #333;
+    border: 2px solid white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.uno-shout-btn {
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    background: #ffaa00;
+    color: white;
+}
+
+.uno-shout-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* Anima√ß√µes */
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+.invalid-move {
+    animation: shake 0.3s;
+    border: 2px solid red !important;
+}
+
+/* Ajustes de Layout */
+.card-pile {
+    width: 100px;
+    height: 154px;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* ANIMA«√O PULSE DA TELA DE BATER */
+@keyframes pulse-bg {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.slap-btn-circle {
+    width: 200px; 
+    height: 200px;
+    background: white;
+    color: red;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 100px;
+    margin: 0 auto;
+    cursor: pointer;
+    box-shadow: 0 0 50px rgba(255,255,255,0.8);
+    transition: transform 0.1s;
+    user-select: none;
+}
+.slap-btn-circle:active {
+    transform: scale(0.9);
+    background: #ffcccc;
+}
+
+#slap-overlay.hidden {
+    display: none !important;
+}
+
+/* Indicador visual de ac˙mulo de compra (STACK) */
+.draw-stack-indicator {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: red;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    z-index: 20;
+    font-size: 18px;
+    animation: bounce 0.5s infinite alternate;
+    white-space: nowrap;
+}
+
+@keyframes bounce {
+    from { transform: translateX(-50%) translateY(0); }
+    to { transform: translateX(-50%) translateY(-10px); }
+}
+
+/* --- NOVOS ESTILOS PARA V4 (Multiplayer & Config) --- */
+
+/* CONFIGURATION PANEL */
+.config-panel {
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    text-align: left;
+}
+
+.config-group { margin-bottom: 20px; }
+.config-group label { display: block; font-weight: bold; margin-bottom: 10px; font-size: 18px; }
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.checkbox-item input { transform: scale(1.5); }
+
+.player-count-control {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+.count-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #333; color: white;
+    font-size: 20px; cursor: pointer;
+}
+
+/* ¡REA DE OPONENTES (TOPO) */
+.opponents-bar {
+    display: flex;
+    flex-wrap: wrap; /* Caso sejam muitos */
+    gap: 15px;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+}
+
+.opponent-card {
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+    position: relative;
+    border: 2px solid transparent;
+    transition: 0.3s;
+}
+
+.opponent-card.active-turn {
+    border-color: #ffaa00;
+    background: rgba(255, 170, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.op-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #555;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    border: 2px solid white;
+    margin-bottom: 5px;
+}
+
+.op-cards-count {
+    font-size: 14px;
+    color: white;
+}
+.op-cards-count::before {
+    content: '?? ';
+}
+
+/* BOT√O DE DEN⁄NCIA (CATCH) */
+.catch-btn {
+    background: red;
+    color: white;
+    border: 2px solid white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 12px;
+    animation: pulse 0.5s infinite;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+
+/* --- MOBILE & RESPONSIVE TWEAKS --- */
+
+/* Ajustes Gerais para Telas Pequenas */
+@media (max-width: 768px) {
+    #game-app {
+        padding: 5px;
+    }
+
+    /* Ajuste de Mesa e Cartas */
+    .table-area {
+        gap: 15px;
+        transform: scale(0.9); /* Reduz um pouco a mesa inteira */
+    }
+
+    .card {
+        width: 80px;
+        height: 123px;
+        font-size: 40px;
+    }
+    
+    .card-value-main {
+        font-size: 40px;
+        -webkit-text-stroke: 1.5px black;
+    }
+    
+    .plus4-symbol {
+        transform: scale(0.8);
+    }
+    
+    /* M„o do Jogador com Scroll Horizontal */
+    .hand-container {
+        justify-content: flex-start; /* Alinha ‡ esquerda para permitir scroll */
+        overflow-x: auto;
+        overflow-y: visible; /* Permite ver o hover subindo */
+        padding: 20px 10px; /* EspaÁo para o hover n„o cortar */
+        width: 100vw;
+        max-width: 100%;
+        margin-left: -5px; /* Compensa padding do container pai */
+        scrollbar-width: none; /* Esconde scrollbar Firefox */
+    }
+    .hand-container::-webkit-scrollbar { display: none; } /* Chrome */
+
+    .hand-container .card {
+        flex-shrink: 0; /* N„o espremer */
+        margin-left: -30px; /* SobreposiÁ„o compacta */
+        box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    }
+    .hand-container .card:first-child { margin-left: 10px; }
+    .hand-container .card:last-child { margin-right: 10px; }
+
+    /* Hover Mobile: N„o subir tanto para n„o sair da tela ou tapar mesa */
+    #local-hand .card:hover, #local-hand .card:active {
+        transform: translateY(-20px) scale(1.1);
+        z-index: 500;
+        margin-right: 25px;
+    }
+
+    /* Oponentes no Topo - Scroll Horizontal */
+    .opponents-bar {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        width: 100%;
+    }
+    .opponent-card {
+        flex-shrink: 0;
+        width: 60px;
+        padding: 5px;
+    }
+    .op-avatar { width: 30px; height: 30px; font-size: 12px; }
+
+    /* Botıes e Avatar Player */
+    .player-area.bottom-player {
+        height: auto;
+        padding-bottom: 10px;
+    }
+    .player-info {
+        width: 100%;
+        justify-content: space-between;
+        padding: 0 10px;
+    }
+    .uno-shout-btn {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .game-logo { font-size: 80px; }
+    .subtitle { font-size: 16px; margin-bottom: 30px; }
+
+    /* Modal Config */
+    .config-panel {
+        width: 95%;
+        padding: 15px;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    .checkbox-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+
+    /* Bot„o de Cor + Compacto */
+    .color-picker-modal { width: 200px; padding: 10px; }
+    .color-btn { width: 70px; height: 70px; }
+    
+    /* Slap Button */
+    .slap-btn-circle {
+        width: 150px; height: 150px; font-size: 60px;
+        margin-top: 20px;
+    }
+    #slap-instructions { font-size: 18px; }
+    h1 { font-size: 50px; }
+}
+
+/* Ajuste para telas muito pequenas (iPhone SE etc) */
+@media (max-height: 600px) {
+    .table-area { transform: scale(0.75); margin: -10px 0; }
+    .player-area { height: auto; }
+    .card { height: 100px; width: 65px; }
+}
+
+
+/* --- ONLINE MODE STYLES --- */
+
+.input-field {
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #ccc;
+    font-size: 18px;
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.input-field.uppercase { text-transform: uppercase; }
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 15px 0;
+    color: #888;
+    font-size: 14px;
+    font-weight: bold;
+}
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ccc;
+}
+.divider:not(:empty)::before { margin-right: .5em; }
+.divider:not(:empty)::after { margin-left: .5em; }
+
+.join-room-group {
+    display: flex;
+    gap: 10px;
+}
+#room-code-input { flex: 2; margin-bottom: 0; }
+.join-room-group button { flex: 1; padding: 10px; font-size: 16px; }
+
+/* LOBBY LIST */
+.lobby-players {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 20px 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.lobby-players ul { list-style: none; padding: 0; }
+.lobby-players li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+}
+.lobby-players li:last-child { border-bottom: none; }
+.is-me-badge {
+    background: #9b59b6;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+.is-host-badge { color: orange; font-weight: bold; }
+
+.status-text {
+    font-style: italic;
+    color: #666;
+    animation: pulse 1.5s infinite;
+}
+
